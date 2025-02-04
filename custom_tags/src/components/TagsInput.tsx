@@ -1,152 +1,163 @@
-import { useRef, useState } from "react";
-import { TextField, Chip, Box, Paper, List, ListItem, Button } from "@mui/material";
+import { useRef, useState, useEffect } from "react";
+import { TextField, Chip, Box, Paper, List, Button } from "@mui/material";
 import ListItemButton from "@mui/material/ListItemButton";
 import { InputAdornment } from "@mui/material";
 
 const TagsInput = () => {
   const MAX_TAGS = 15;
+  const MAX_TAG_LENGTH = 30;
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [savedTags, setSavedTags] = useState<string[]>(() => {
+    return JSON.parse(localStorage.getItem("savedTags") || "[]");
+  });
+  const [tempTags, setTempTags] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showInput, setShowInput] = useState(false);
-  
+  const [showInput, setShowInput] = useState(savedTags.length === 0);
 
-  const tags = ["App", "Art", "Anish", "Tutorial", "HowTo", "DIY", "Review", "Tech", "Gaming", "Travel", "Fitness", "Cooking", "Vlog"];
+  useEffect(() => {
+    localStorage.setItem("savedTags", JSON.stringify(savedTags));
+  }, [savedTags]);
 
-  // Convert all comparisons to lowercase to ensure case insensitivity
-  const lowerSelected = selected.map(tag => tag.toLowerCase());
-
-  // Filter suggested tags (excluding already selected ones)
-  const filteredTags = tags.filter(
-    (item) => item.toLowerCase().includes(query.toLowerCase().trim()) && !lowerSelected.includes(item.toLowerCase())
-  );
+  const tags = ["App", "Art", "Tutorial", "HowTo", "DIY", "Review", "Tech", "Gaming", "Travel", "Fitness", "Cooking", "Vlog"];
+ 
+  // Convert all to lowercase for case-insensitive comparison
+  const lowerSavedTags = savedTags.map(tag => tag.toLowerCase());
+  const lowerTempTags = tempTags.map(tag => tag.toLowerCase());
 
   const isDuplicateTag = tags.some(tag => tag.toLowerCase() === query.toLowerCase().trim());
-  // Disable Add button if the tag is empty or already exists (case insensitive)
-  const isDisable = !query.trim() || lowerSelected.includes(query.toLowerCase().trim()) || isDuplicateTag || selected.length >= MAX_TAGS;
+  
+
+  // Filter and sort suggested tags (excluding existing ones)
+  const filteredTags = tags
+    .filter((item) => 
+      item.toLowerCase().includes(query.toLowerCase().trim()) &&
+      !lowerSavedTags.includes(item.toLowerCase()) &&
+      !lowerTempTags.includes(item.toLowerCase())
+    )
+    .sort((a, b) => a.localeCompare(b));
+ 
+
+  const isDisable =
+    !query.trim() ||
+    tempTags.includes(query.toLowerCase().trim()) ||
+    savedTags.includes(query.toLowerCase().trim())  ||
+    query.length > MAX_TAG_LENGTH ||
+    tempTags.length + savedTags.length >= MAX_TAGS || isDuplicateTag;
 
   return (
     <>
-    <h2>Tags</h2>
-    <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative">
-      <Box>
-        {/* Input Box with Tags */}
-        <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1 ,flexWrap:"wrap"}}>
-          <TextField
-            inputRef={inputRef}
-            variant="outlined"
-            fullWidth
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={showInput ? "Enter tag..." : ""}
-            onFocus={() => {
-              setMenuOpen(true);
-              setShowInput(true);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !isDisable) {
-                const matchedTag = filteredTags.find((tag) => tag.toLowerCase() === query.toLowerCase().trim());
-                  const tagToAdd = matchedTag || query;
-
-                  setSelected((prev) => [...prev, tagToAdd]);
+      <h2>Tags</h2>
+      <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative">
+        <Box>
+          <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap" }}>
+            <TextField
+              inputRef={inputRef}
+              variant="outlined"
+              fullWidth
+              value={query}
+              onChange={(e) => setQuery(e.target.value.slice(0, MAX_TAG_LENGTH))}
+              placeholder={showInput ? "Enter tag..." : ""}
+              onFocus={() => {
+                setMenuOpen(true);
+                setShowInput(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isDisable) {
+                  setTempTags([...tempTags, query]);
                   setQuery("");
                   setMenuOpen(true);
-               
-              }
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  {!showInput && selected.length === 0 && (
-                    <Button color="primary"
-                      onClick={() => setShowInput(true)}>
-                      +ADD
-                    </Button>
-                  )}
-                  {selected.map((tag) => (
-                    <Chip
-                      key={tag}
-                      label={tag}
-                      onDelete={() => {
-                        setSelected(selected.filter((t) => t !== tag));
-                        
-                      }}
-                      sx={{ marginRight: "5px" }} 
+                }
+              }}
+              
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {!showInput &&  (
+                      <Button color="primary" onClick={() => setShowInput(true)}>
+                        +ADD
+                      </Button>
+                    )}
+                    {savedTags.map((tag) => (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        onDelete={() => {
+                          setSavedTags(savedTags.filter((t) => t !== tag));
+                          setShowInput(false);
+                        }}
+                        sx={{ marginRight: "5px", backgroundColor: "#90caf9" }}
                       />
-                  ))}
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-
-                  {showInput && (
-                    <Button
-                      color="primary"
-                      onClick={() => {
-                        if (!isDisable) {
-                          setSelected((prev) => [...prev, query]);
+                    ))}
+                    {tempTags.map((tag) => (
+                      <Chip key={tag} label={tag} 
+                      onDelete={() => {
+                        setTempTags(tempTags.filter((t) => t !== tag));
+                      }}
+                      sx={{ marginRight: "5px", backgroundColor: "#ffcc80" }} />
+                    ))}
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {showInput && (
+                      <Button
+                        color="primary"
+                        onClick={() => {
+                          setSavedTags([...savedTags, ...tempTags]);
+                          setTempTags([]);
                           setQuery("");
-                          setMenuOpen(true);
-                         
-                        }
-                      } }
-                        disabled = {selected.length >= MAX_TAGS}
-                    >
-                      SAVE
-                    </Button>
-                  )}
-                </InputAdornment>
-              ),
-            }} />
-        </Paper>
+                          setMenuOpen(false);
+                          setShowInput(false);
+                        }}
+                        disabled={tempTags.length === 0 || isDuplicateTag}
+                      >
+                        SAVE
+                      </Button>
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Paper>
 
-        {/* Drop-down with Suggested Tags */}
-        {menuOpen && showInput && (
-          <Paper sx={{ mt: 1, maxHeight: 150, overflowY: "auto", width:250, position:"relative"}}>
-            <List>
-              {filteredTags.length > 0 ? (
-                filteredTags.map((tag) => (
+          {menuOpen && showInput && (
+            <Paper sx={{ mt: 1, maxHeight: 150, overflowY: "auto", width: 250, position: "relative" }}>
+              <List>
+                {filteredTags.map((tag) => (
                   <ListItemButton
-                  disabled = {selected.length >= MAX_TAGS}
                     key={tag}
                     onClick={() => {
-                      setSelected((prev) => [...prev, tag]);
+                      setTempTags([...tempTags, tag]);
                       setQuery("");
-                      setMenuOpen(true);
-                      setShowInput(true);
-                     
+                      setMenuOpen(false);
                     }}
                   >
                     {tag}
                   </ListItemButton>
-                ))
-              ) : (null)
-              }
-            </List>
-            {query.trim() && !filteredTags.includes(query) && (
+                ))}
+                  {query.trim() && !filteredTags.includes(query) && (
               <Box display="flex" justifyContent="center" p={1} width="100%">
                 <Button
                   disabled={isDisable}
                   onClick={() => {
                     if (isDisable) return;
-                    setSelected((prev) => [...prev, query]);
+                    setTempTags([...tempTags, query]);
                     setQuery("");
                     inputRef.current?.focus();
                     setMenuOpen(true);
-                    setShowInput(false);
-                   
-                  } }
+                    setShowInput(true);
+                  }}
                 >
                    "{query}"  + Add
                 </Button>
               </Box>
             )}
-          </Paper>
-        )}
+              </List>
+            </Paper>
+          )}
+        </Box>
       </Box>
-    </Box>
-  
     </>
   );
 };
