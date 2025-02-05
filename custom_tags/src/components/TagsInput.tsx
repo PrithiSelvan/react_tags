@@ -6,19 +6,19 @@ import { InputAdornment } from "@mui/material";
 const TagsInput = () => {
   const MAX_TAGS = 15;
   const MAX_TAG_LENGTH = 30;
-  const [query, setQuery] = useState("");
-
+  const MAX_VISIBLE_TAGS = 3;
   // const [savedTags, setSavedTags] = useState<string[]>(() => {
   //   return JSON.parse(localStorage.getItem("savedTags") || "[]");
   // });
   const [savedTags, setSavedTags] = useState<string[]>([]);
   const [tempTags, setTempTags] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showInput, setShowInput] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1); // Track active list item index
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]); // Reference to the list
-
+  const [showAllTags, setShowAllTags] = useState(false);
 
   // useEffect(() => {
   //   localStorage.setItem("savedTags", JSON.stringify(savedTags));
@@ -85,7 +85,7 @@ const TagsInput = () => {
       <h2>Tags</h2>
       <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative" >
         <Box>
-          <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap" }} elevation={0}>
+          <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap"}} elevation={0}>
             <TextField
               inputRef={inputRef}
               variant="outlined"
@@ -102,7 +102,7 @@ const TagsInput = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    {savedTags.map((tag) => (
+                    {savedTags.slice(0, showAllTags ? savedTags.length : MAX_VISIBLE_TAGS).map((tag) => (
                       <Chip
                         key={tag}
                         label={tag}
@@ -113,6 +113,9 @@ const TagsInput = () => {
                         sx={{ marginRight: "5px", backgroundColor: "#90caf9" }}
                       />
                     ))}
+                    {!showAllTags && savedTags.length > MAX_VISIBLE_TAGS && (
+                      <Button onClick={() => setShowAllTags(true)}>+{savedTags.length - MAX_VISIBLE_TAGS}</Button>
+                    )}
                     {!showInput && (
                       <Button color="primary" onClick={() => setShowInput(true)}>
                         +ADD
@@ -139,6 +142,7 @@ const TagsInput = () => {
                           setQuery("");
                           setMenuOpen(false);
                           setShowInput(false);
+                          setShowAllTags(false);
                         }}
                         disabled={query.length > MAX_TAG_LENGTH || savedTags.length > MAX_TAGS || tempTags.length > MAX_TAGS ||
                           (tempTags.length + savedTags.length) > MAX_TAGS || isDuplicateTag}
