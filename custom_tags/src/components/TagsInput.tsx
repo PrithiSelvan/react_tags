@@ -13,22 +13,20 @@ const TagsInput = () => {
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showInput, setShowInput] = useState(savedTags.length === 0);
+  const [showInput, setShowInput] = useState(false);
+ 
 
   useEffect(() => {
     localStorage.setItem("savedTags", JSON.stringify(savedTags));
   }, [savedTags]);
 
+
   const tags = ["App", "Art", "Tutorial", "HowTo", "DIY", "Review", "Tech", "Gaming", "Travel", "Fitness", "Cooking", "Vlog"];
  
-  // Convert all to lowercase for case-insensitive comparison
   const lowerSavedTags = savedTags.map(tag => tag.toLowerCase());
   const lowerTempTags = tempTags.map(tag => tag.toLowerCase());
-
   const isDuplicateTag = tags.some(tag => tag.toLowerCase() === query.toLowerCase().trim());
   
-
-  // Filter and sort suggested tags (excluding existing ones)
   const filteredTags = tags
     .filter((item) => 
       item.toLowerCase().includes(query.toLowerCase().trim()) &&
@@ -37,7 +35,6 @@ const TagsInput = () => {
     )
     .sort((a, b) => a.localeCompare(b));
  
-
   const isDisable =
     !query.trim() ||
     tempTags.includes(query.toLowerCase().trim()) ||
@@ -56,7 +53,7 @@ const TagsInput = () => {
               variant="outlined"
               fullWidth
               value={query}
-              onChange={(e) => setQuery(e.target.value.slice(0, MAX_TAG_LENGTH))}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder={showInput ? "Enter tag..." : ""}
               onFocus={() => {
                 setMenuOpen(true);
@@ -73,11 +70,6 @@ const TagsInput = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    {!showInput &&  (
-                      <Button color="primary" onClick={() => setShowInput(true)}>
-                        +ADD
-                      </Button>
-                    )}
                     {savedTags.map((tag) => (
                       <Chip
                         key={tag}
@@ -89,6 +81,11 @@ const TagsInput = () => {
                         sx={{ marginRight: "5px", backgroundColor: "#90caf9" }}
                       />
                     ))}
+                    {!showInput && (
+                      <Button color="primary" onClick={() => setShowInput(true)}>
+                        +ADD
+                      </Button>
+                    )}
                     {tempTags.map((tag) => (
                       <Chip key={tag} label={tag} 
                       onDelete={() => {
