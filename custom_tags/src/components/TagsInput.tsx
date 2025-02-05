@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { TextField, Chip, Box, Paper, List, Button } from "@mui/material";
 import ListItemButton from "@mui/material/ListItemButton";
 import { InputAdornment } from "@mui/material";
@@ -7,21 +7,25 @@ const TagsInput = () => {
   const MAX_TAGS = 15;
   const MAX_TAG_LENGTH = 30;
   const [query, setQuery] = useState("");
-  const [savedTags, setSavedTags] = useState<string[]>(() => {
-    return JSON.parse(localStorage.getItem("savedTags") || "[]");
-  });
+
+  // const [savedTags, setSavedTags] = useState<string[]>(() => {
+  //   return JSON.parse(localStorage.getItem("savedTags") || "[]");
+  // });
+  const [savedTags, setSavedTags] = useState<string[]>([]);
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showInput, setShowInput] = useState(false);
- 
-
-  useEffect(() => {
-    localStorage.setItem("savedTags", JSON.stringify(savedTags));
-  }, [savedTags]);
+  const [activeIndex, setActiveIndex] = useState(-1); // Track active list item index
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]); // Reference to the list
 
 
-  const tags = ["App", "Art", "Tutorial", "HowTo", "DIY", "Review", "Tech", "Gaming", "Travel", "Fitness", "Cooking", "Vlog"];
+  // useEffect(() => {
+  //   localStorage.setItem("savedTags", JSON.stringify(savedTags));
+  // }, [savedTags]);
+
+
+  const tags = ["App", "Art", "Tutorial", "HowTo", "DIY", "Review", "Tech", "Gaming", "Travel", "Fitness", "Cooking", "Vlog", "Hello" , "Java" , "Python" , "React"];
  
   const lowerSavedTags = savedTags.map(tag => tag.toLowerCase());
   const lowerTempTags = tempTags.map(tag => tag.toLowerCase());
@@ -39,34 +43,62 @@ const TagsInput = () => {
     !query.trim() ||
     tempTags.includes(query.toLowerCase().trim()) ||
     savedTags.includes(query.toLowerCase().trim())  ||
-    query.length > MAX_TAG_LENGTH ||
-    tempTags.length + savedTags.length >= MAX_TAGS || isDuplicateTag;
+    query.length > MAX_TAG_LENGTH || savedTags.length > MAX_TAGS || tempTags.length > MAX_TAGS ||
+    (tempTags.length + savedTags.length) >MAX_TAGS || isDuplicateTag;
+
+    const handleInputChange = (e:any)  => {
+      setQuery(e.target.value);
+      setActiveIndex(-1);
+    }
+
+    const handleKeyDown = (e: any) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((prevIndex) => {
+          const newIndex = Math.min(prevIndex + 1, filteredTags.length - 1);
+          itemRefs.current[newIndex]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return newIndex;
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((prevIndex) => {
+          const newIndex = Math.max(prevIndex - 1, 0);
+          itemRefs.current[newIndex]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return newIndex;
+        });
+      } else if (e.key === "Enter") {
+        if (activeIndex >= 0 && filteredTags[activeIndex]) {
+          setTempTags([...tempTags, filteredTags[activeIndex]]);
+          setQuery("");
+          setMenuOpen(true);
+          setActiveIndex(-1);
+        } else if (!isDisable) {
+          setTempTags([...tempTags, query]);
+          setQuery("");
+        }
+      }
+    };
+    
 
   return (
     <>
       <h2>Tags</h2>
-      <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative">
+      <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative" >
         <Box>
-          <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap" }}>
+          <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap" }} elevation={0}>
             <TextField
               inputRef={inputRef}
               variant="outlined"
               fullWidth
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleInputChange}
               placeholder={showInput ? "Enter tag..." : ""}
               onFocus={() => {
                 setMenuOpen(true);
                 setShowInput(true);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isDisable) {
-                  setTempTags([...tempTags, query]);
-                  setQuery("");
-                  setMenuOpen(true);
-                }
-              }}
-              
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -76,7 +108,7 @@ const TagsInput = () => {
                         label={tag}
                         onDelete={() => {
                           setSavedTags(savedTags.filter((t) => t !== tag));
-                          setShowInput(false);
+                          setShowInput(true);
                         }}
                         sx={{ marginRight: "5px", backgroundColor: "#90caf9" }}
                       />
@@ -90,6 +122,7 @@ const TagsInput = () => {
                       <Chip key={tag} label={tag} 
                       onDelete={() => {
                         setTempTags(tempTags.filter((t) => t !== tag));
+                        setShowInput(true);
                       }}
                       sx={{ marginRight: "5px", backgroundColor: "#ffcc80" }} />
                     ))}
@@ -107,7 +140,8 @@ const TagsInput = () => {
                           setMenuOpen(false);
                           setShowInput(false);
                         }}
-                        disabled={tempTags.length === 0 || isDuplicateTag}
+                        disabled={query.length > MAX_TAG_LENGTH || savedTags.length > MAX_TAGS || tempTags.length > MAX_TAGS ||
+                          (tempTags.length + savedTags.length) > MAX_TAGS || isDuplicateTag}
                       >
                         SAVE
                       </Button>
@@ -119,24 +153,32 @@ const TagsInput = () => {
           </Paper>
 
           {menuOpen && showInput && (
-            <Paper sx={{ mt: 1, maxHeight: 150, overflowY: "auto", width: 250, position: "relative" }}>
+            <Paper sx={{ mt: 1, maxHeight: 150, overflowY: "auto", width: 250, position: "relative" }} elevation={0}>
               <List>
-                {filteredTags.map((tag) => (
+                {filteredTags.map((tag,index) => (
                   <ListItemButton
                     key={tag}
+                    ref={(el) => (itemRefs.current[index] = el)} 
                     onClick={() => {
                       setTempTags([...tempTags, tag]);
                       setQuery("");
                       setMenuOpen(false);
                     }}
+                    selected={index === activeIndex}
+                    sx={{
+                      backgroundColor: index === activeIndex ? "#91caf9" : "transparent",
+                      color: index === activeIndex ? "#000000" : "inherit",
+                    }}
+                    disabled={query.length > MAX_TAG_LENGTH || savedTags.length >= MAX_TAGS || tempTags.length >= MAX_TAGS ||
+                      (tempTags.length + savedTags.length) >= MAX_TAGS }
                   >
                     {tag}
                   </ListItemButton>
                 ))}
                   {query.trim() && !filteredTags.includes(query) && (
               <Box display="flex" justifyContent="center" p={1} width="100%">
-                <Button
-                  disabled={isDisable}
+                <Button sx={{display:"flex", justifyContent:"center"}}
+                  variant="outlined"
                   onClick={() => {
                     if (isDisable) return;
                     setTempTags([...tempTags, query]);
@@ -145,6 +187,8 @@ const TagsInput = () => {
                     setMenuOpen(true);
                     setShowInput(true);
                   }}
+                  disabled={query.length > MAX_TAG_LENGTH || savedTags.length >= MAX_TAGS || tempTags.length >= MAX_TAGS ||
+                    (tempTags.length + savedTags.length) >= MAX_TAGS || isDuplicateTag}
                 >
                    "{query}"  + Add
                 </Button>
