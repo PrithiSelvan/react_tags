@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TextField, Chip, Box, Paper, List, Button } from "@mui/material";
 import ListItemButton from "@mui/material/ListItemButton";
 import { InputAdornment } from "@mui/material";
@@ -78,17 +78,35 @@ const TagsInput = () => {
         }
       }
     };
+
+
+  // Close dropdown when clicking outside
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+        setShowInput(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
     
 
   return (
-    <>
+    <div ref={containerRef}>
       <h2>Tags</h2>
       <Box display="flex" justifyContent="left" alignItems="center" margin="10px" padding="10px" position="relative" >
         <Box>
           <Paper sx={{ display: "flex", alignItems: "center", p: 1, gap: 1, flexWrap: "wrap"}} elevation={0}>
             <TextField
               inputRef={inputRef}
-              variant="outlined"
+              
               fullWidth
               value={query}
               onChange={handleInputChange}
@@ -106,11 +124,12 @@ const TagsInput = () => {
                       <Chip
                         key={tag}
                         label={tag}
+                        size="small"
                         onDelete={() => {
                           setSavedTags(savedTags.filter((t) => t !== tag));
                           setShowInput(true);
                         }}
-                        sx={{ marginRight: "5px", backgroundColor: "#90caf9" }}
+                        // sx={{ marginRight: "5px" }}
                       />
                     ))}
                     {!showAllTags && savedTags.length > MAX_VISIBLE_TAGS && (
@@ -122,12 +141,13 @@ const TagsInput = () => {
                       </Button>
                     )}
                     {tempTags.map((tag) => (
-                      <Chip key={tag} label={tag} 
+                      <Chip key={tag} label={tag} size="small"
                       onDelete={() => {
                         setTempTags(tempTags.filter((t) => t !== tag));
                         setShowInput(true);
                       }}
-                      sx={{ marginRight: "5px", backgroundColor: "#ffcc80" }} />
+                      // sx={{ marginRight: "5px" }}
+                       />
                     ))}
                   </InputAdornment>
                 ),
@@ -203,7 +223,7 @@ const TagsInput = () => {
           )}
         </Box>
       </Box>
-    </>
+    </div>
   );
 };
 
