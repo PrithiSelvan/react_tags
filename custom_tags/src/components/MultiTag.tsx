@@ -28,7 +28,7 @@ const initialTags: Tag[] = [
 ];
 
 const allTags: Tag[] = [
-  { id: 101, label: '123456789012345678901234567890' },
+  { id: 101, label: 'Server' },
   { id: 102, label: 'React Hooks' },
   { id: 103, label: 'TypeScript Type' },
   { id: 104, label: 'Node.js Express' },
