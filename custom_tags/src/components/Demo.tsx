@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import Chip from '@mui/material/Chip';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
@@ -22,13 +22,13 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
     const { tags: apiTags } = useContext(PortalContext)!;
     const apiNewTags = apiTags.map((tag, i) => ({ id: i, label: tag }));
     const defaultTags = tagsList;
-    const [selectedTags, setSelectedTags] = React.useState<string[]>(defaultTags);
-    const [availableOptions, setAvailableOptions] = React.useState<string[]>(
+    const [selectedTags, setSelectedTags] = useState<string[]>(defaultTags);
+    const [availableOptions, setAvailableOptions] = useState<string[]>(
         apiNewTags.map((tag) => tag.label).filter((option) => !defaultTags.includes(option))
     );
 
-    const [showButton, setShowButton] = React.useState<boolean>(false);
-    const [warningMessage, setWarningMessage] = React.useState<string>('');
+    const [showButton, setShowButton] = useState<boolean>(false);
+    const [warningMessage, setWarningMessage] = useState<string>('');
 
     const handleChange = (_event: any, newValue: string[]) => {
         if (newValue.length > MAX_TAGS) {
@@ -78,8 +78,8 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', width: 500 }}>
-            <Stack spacing={3} sx={{ width: 600, pl: 3, pt: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: 600 }}>
+            <Stack spacing={3} sx={{ width: 400, pl: 3, pt: 1 }}>
 
 
 
