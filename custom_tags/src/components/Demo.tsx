@@ -62,29 +62,30 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
             apiNewTags.map((tag) => tag.label).filter((option) => !lowerCaseTagsSet.has(option.toLowerCase()))
         );
         setShowButton(true);
-        setHasEdited(false);
+        setHasEdited(true);
     };
 
     const handleTextField = () => {
         setShowButton(true);
-        setHasEdited(false);
+        setHasEdited(true);
     }
 
     const handleSave = () => {
         const tagsAPI = Object.values(selectedTags).map((tag) => tag);
         updateTag({ tags: tagsAPI });
-        
+        defaultTags.length = 0;
+        defaultTags.push(...tagsAPI);
         setShowButton(false);
-        setHasEdited(true);
+        setHasEdited(false);
     };
 
     const handleCancel = () => {
         setSelectedTags(defaultTags);
         setAvailableOptions(
-            apiNewTags.map((tag) => tag.label).filter((option) => option != defaultTags)
+            apiNewTags.map((tag) => tag.label).filter((option) => !defaultTags.includes(option))
         );
         setShowButton(false);
-        setHasEdited(true);
+        setHasEdited(false);
     };
 
     return (
@@ -110,14 +111,15 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
                     renderTags={(value, getTagProps) =>
                         value.map((option: string, index: number) => {
                             const { key, ...tagProps } = getTagProps({ index });
-                            const isDefaultTag = tagsList.includes(option);
+                            const isDefaultTag = defaultTags.includes(option);
+                            const showDeleteIcon = hasEdited || !isDefaultTag;
                             return (
                                 <Chip variant="outlined"
                                     label={option}
                                     size="small"
                                     key={key} 
                                     {...tagProps} 
-                                    onDelete={isDefaultTag ? undefined : hasEdited ? undefined : tagProps.onDelete}/>
+                                    onDelete={showDeleteIcon ? tagProps.onDelete : undefined}/>
                             );
                         })
                     }
