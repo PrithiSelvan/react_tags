@@ -78,9 +78,10 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
     };
 
     return (
-        <Stack spacing={3} sx={{ width: 500, pl: 3, pt: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: 500 }}>
+            <Stack spacing={3} sx={{ width: 600, pl: 3, pt: 1 }}>
 
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
 
                 <Autocomplete
                     multiple
@@ -100,7 +101,10 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
                         value.map((option: string, index: number) => {
                             const { key, ...tagProps } = getTagProps({ index });
                             return (
-                                <Chip variant="outlined" label={option} size="small" key={key} {...tagProps} />
+                                <Chip variant="outlined"
+                                    label={option}
+                                    size="small"
+                                    key={key} {...tagProps} />
                             );
                         })
                     }
@@ -121,35 +125,33 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
 
 
                 />
-                {showButton && (
-                    <Box sx={{ display: 'flex', m: 0, p: 0 }}>
-                        <Typography>{warningMessage}</Typography>
-                        <Button
-                            sx={{ p: 0 }}
-                            variant="text"
-                            color="primary"
-                            onClick={() => {
-                                handleSave();
+            </Stack>
+            {showButton && (
+                <Box sx={{ display: 'flex', m: 0, p: 0 }}>
+                    <Typography>{warningMessage}</Typography>
+                    <Button
+                        sx={{ p: 0 }}
+                        variant="text"
+                        color="primary"
+                        onClick={() => {
+                            handleSave();
 
-                            }}>
-                            Save
-                        </Button><Button
-                            sx={{ p: 0 }}
-                            variant="text"
-                            color="primary"
-                            onClick={() => {
-                                handleCancel();
-                            }}>
-                            Cancel
-                        </Button>
-                    </Box>
+                        }}>
+                        Save
+                    </Button><Button
+                        sx={{ p: 0 }}
+                        variant="text"
+                        color="primary"
+                        onClick={() => {
+                            handleCancel();
+                        }}>
+                        Cancel
+                    </Button>
+                </Box>
 
-                )}
+            )}
 
-            </Box>
-
-
-        </Stack>
+        </Box>
 
     );
 }
