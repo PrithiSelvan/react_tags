@@ -29,6 +29,7 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
 
     const [showButton, setShowButton] = useState<boolean>(false);
     const [warningMessage, setWarningMessage] = useState<string>('');
+    const [hasEdited,setHasEdited] = useState<boolean>(false);
 
     const handleChange = (_event: any, newValue: string[]) => {
         if (newValue.length > MAX_TAGS) {
@@ -60,13 +61,21 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
         setAvailableOptions(
             apiNewTags.map((tag) => tag.label).filter((option) => !lowerCaseTagsSet.has(option.toLowerCase()))
         );
-        setShowButton(uniqueTags.length > 0);
+        setShowButton(true);
+        setHasEdited(false);
     };
+
+    const handleTextField = () => {
+        setShowButton(true);
+        setHasEdited(false);
+    }
 
     const handleSave = () => {
         const tagsAPI = Object.values(selectedTags).map((tag) => tag);
         updateTag({ tags: tagsAPI });
+        
         setShowButton(false);
+        setHasEdited(true);
     };
 
     const handleCancel = () => {
@@ -75,6 +84,7 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
             apiNewTags.map((tag) => tag.label).filter((option) => option != defaultTags)
         );
         setShowButton(false);
+        setHasEdited(true);
     };
 
     return (
@@ -100,11 +110,14 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
                     renderTags={(value, getTagProps) =>
                         value.map((option: string, index: number) => {
                             const { key, ...tagProps } = getTagProps({ index });
+                            const isDefaultTag = tagsList.includes(option);
                             return (
                                 <Chip variant="outlined"
                                     label={option}
                                     size="small"
-                                    key={key} {...tagProps} />
+                                    key={key} 
+                                    {...tagProps} 
+                                    onDelete={isDefaultTag ? undefined : hasEdited ? undefined : tagProps.onDelete}/>
                             );
                         })
                     }
@@ -118,6 +131,7 @@ const TagOption: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
                                 ...params.InputProps,
                                 endAdornment: null,
                             }}
+                            onClick={handleTextField}
 
                         />
 
