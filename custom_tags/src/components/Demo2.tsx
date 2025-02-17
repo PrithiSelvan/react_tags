@@ -197,6 +197,13 @@ const TagOption: React.FC = () => {
                                 return options.filter((option) => option.includes(inputValue));
                             }}
                             size='small'
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    "& fieldset": { borderColor: "blue" }, // Border color
+                                    "&:hover fieldset": { borderColor: "blue" }, // Hover effect
+                                    "&.Mui-focused fieldset": { borderColor: "blue" }, // Focus color
+                                },
+                            }}
                             renderTags={(value, getTagProps) => value.map((option, index) => {
                                 const { key, ...tagProps } = getTagProps({ index });
                                 const isDefaultTag = defaultTags.includes(option);
@@ -221,6 +228,11 @@ const TagOption: React.FC = () => {
                                     InputProps={{
                                         ...params.InputProps,
                                         endAdornment: null,
+                                    }}
+                                    sx={{
+                                        "& .MuiInput-underline:before": { borderBottomColor: "blue !important" }, // Always blue underline
+                                        "& .MuiInput-underline:hover:before": { borderBottomColor: "blue !important" }, // No black on hover
+                                        "& .MuiInput-underline:after": { borderBottomColor: "blue !important" }, // Always blue on focus
                                     }}
                                     onClick={handleTextField} />
 
