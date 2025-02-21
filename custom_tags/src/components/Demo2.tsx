@@ -1277,6 +1277,60 @@ export const getSensorsVersion = async (portalId: string, _p0: { sensorsVersion?
 }
 
 
+ http.get(`${REMOTE_URL}/api/agent-versions`, async ({ request, params }) => {
+    return HttpResponse.json({
+      data: [{
+        type: 'versions',
+        id: 1,
+        attributes: {
+          version: 'v6.7.4',
+          platform: 'windows',
+          includedOsVersions: "windows 11",
+          excludedOsVersions: "windows 8",
+          includedBuilds: 1047,
+          excludedBuilds: null,
+          releasedDate: "21/02/2025",
+          changes: "feat: request and reply decorators can not be a reference type fix: config type in RouteShorthandOptions",
+          downloadLink: null
+        },
+        type: 'versions',
+        id: 2,
+        attributes: {
+          version: 'v7.7.4',
+          platform: 'windows',
+          includedOsVersions: "windows 11",
+          excludedOsVersions: "windows 8",
+          includedBuilds: 1047,
+          excludedBuilds: null,
+          releasedDate: "21/01/2025",
+          changes: "feat: request and reply decorators can not be a reference type fix: config type in RouteShorthandOptions",
+          downloadLink: null
+        },
+        type: 'versions',
+        id: 3,
+        attributes: {
+          version: 'v8.7.4',
+          platform: 'windows',
+          includedOsVersions: "windows 11",
+          excludedOsVersions: "windows 8",
+          includedBuilds: 1047,
+          excludedBuilds: null,
+          releasedDate: "21/11/2024",
+          changes: "feat: request and reply decorators can not be a reference type fix: config type in RouteShorthandOptions",
+          downloadLink: null
+        },
+
+      }
+     
+
+      ],
+
+    
+
+    });
+
+  })
+
 
 
  
