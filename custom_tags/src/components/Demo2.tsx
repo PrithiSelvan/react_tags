@@ -48,6 +48,7 @@ interface Column {
 }
 
 export type AgentVersions = {
+  platform: string;
   version: string;
   downloadLink: string;
 };
@@ -108,7 +109,7 @@ export function AgentInstallation() {
   }
 
   async function fetchSensors() {
-    const sensorsDetails: string[] = ['version', 'downloadLink'];
+    const sensorsDetails: string[] = ['platform','version', 'downloadLink'];
 
     try {
       const response = (await getSensorsVersion(portalId, {
@@ -124,6 +125,7 @@ export function AgentInstallation() {
         sensorsData.forEach((sensor: any) => {
           const attributes = sensor?.attributes;
           sensorsVersion.push({
+            platform: attributes?.platform,
             version: attributes?.version,
             downloadLink: attributes?.downloadLink
           });
@@ -217,159 +219,85 @@ export function AgentInstallation() {
 
   return (
     <>
-      <Box component="div" sx={{ padding: '0px 25px 0px 25px' }}>
-        <Typography variant="h4" sx={{ marginBottom: '10px' }}>
-          Install Agent
-        </Typography>
-        <Typography variant="h6" sx={{ marginBottom: '10px' }}>
-          Install your sensor in windows, macos and linux.
-        </Typography>
-      </Box>
-      <Divider />
-      <ApiKey />
-      <Box component={'div'} sx={{ padding: '0px 25px 0px 25px' }}>
-        <Grid container>
-          <Grid size={6}>
-            <Tabs value={tabValue} onChange={handleTabChange} aria-label="icon position tabs example" sx={{ marginBottom: '20px' }}>
-              <Tab icon={<WindowsIcon />} iconPosition="start" label=" Windows" sx={{ whiteSpace: 'pre' }} />
-              <Tab icon={<MacosIcon />} iconPosition="start" label=" MacOS" sx={{ whiteSpace: 'pre' }} />
-              <Tab icon={<LinuxIcon />} iconPosition="start" label=" Linux" sx={{ whiteSpace: 'pre' }} />
-            </Tabs>
-            <TabPanel value={tabValue} index={0}>
-              <>
-                {sensorVersionDetails.length > 0 ? (
-                  sensorVersionDetails.map((sensor, index) => (
-                    <Box
-                      key={index}
-                      component={'div'}
-                      sx={{
-                        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: 1,
-                        my: 1,
-                        minHeight: '30px',
-                        width: '800px'
-                      }}
-                    >
-                      <Box sx={{ padding: 1.25 }}>
-                        <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'} marginBottom={0.5}>
-                          <Stack direction={'row'} alignItems={'center'}>
-                            <Typography variant="h4" sx={{ paddingRight: 2, fontSize: 16 }}>
-                              Windows Sensor - {sensor.version}
-                            </Typography>
-                          </Stack>
-                          <Button size="medium" color="primary" variant="contained">
-                            Download
-                          </Button>
+    <Box component="div" sx={{ padding: '0px 25px' }}>
+      <Typography variant="h4" sx={{ marginBottom: '10px' }}>
+        Install Agent
+      </Typography>
+      <Typography variant="h6" sx={{ marginBottom: '10px' }}>
+        Install your sensor in Windows, MacOS, and Linux.
+      </Typography>
+    </Box>
+    <Divider />
+    <ApiKey />
+    <Box component={'div'} sx={{ padding: '0px 25px' }}>
+      <Grid container>
+        <Grid size={6}>
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="icon position tabs example" sx={{ marginBottom: '20px' }}>
+            <Tab icon={<WindowsIcon />} iconPosition="start" label=" Windows" sx={{ whiteSpace: 'pre' }} />
+            <Tab icon={<MacosIcon />} iconPosition="start" label=" MacOS" sx={{ whiteSpace: 'pre' }} />
+            <Tab icon={<LinuxIcon />} iconPosition="start" label=" Linux" sx={{ whiteSpace: 'pre' }} />
+          </Tabs>
+  
+          {['windows', 'mac', 'linux'].map((platform, idx) => (
+            <TabPanel key={platform} value={tabValue} index={idx}>
+              {sensorVersionDetails.filter(sensor => sensor.platform === platform).length > 0 ? (
+                sensorVersionDetails.filter(sensor => sensor.platform === platform).map((sensor, index) => (
+                  <Box
+                    key={index}
+                    component={'div'}
+                    sx={{
+                      borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+                      borderRadius: 1,
+                      my: 1,
+                      minHeight: '30px',
+                      width: '800px'
+                    }}
+                  >
+                    <Box sx={{ padding: 1.25 }}>
+                      <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'} marginBottom={0.5}>
+                        <Stack direction={'row'} alignItems={'center'}>
+                          <Typography variant="h4" sx={{ paddingRight: 2, fontSize: 16 }}>
+                            {platform.charAt(0).toUpperCase() + platform.slice(1)} Sensor - {sensor.version}
+                          </Typography>
                         </Stack>
-                      </Box>
+                        <Button size="medium" color="primary" variant="contained" href={sensor.downloadLink} target="_blank">
+                          Download
+                        </Button>
+                      </Stack>
                     </Box>
-                  ))
-                ) : (
-                  <Box sx={{ textAlign: 'center', pt: 20 }}>
-                    <Typography>No Versions available....</Typography>
                   </Box>
-                )}
-              </>
+                ))
+              ) : (
+                <Box sx={{ textAlign: 'center', pt: 20 }}>
+                  <Typography>No Versions available....</Typography>
+                </Box>
+              )}
             </TabPanel>
-            <TabPanel value={tabValue} index={1}>
-              <>
-                {sensorVersionDetails.length > 0 ? (
-                  sensorVersionDetails.map((sensor, index) => (
-                    <Box
-                      key={index}
-                      component={'div'}
-                      sx={{
-                        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: 1,
-                        my: 1,
-                        minHeight: '30px',
-                        width: '800px'
-                      }}
-                    >
-                      <Box sx={{ padding: 1.25 }}>
-                        <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'} marginBottom={0.5}>
-                          <Stack direction={'row'} alignItems={'center'}>
-                            <Typography variant="h4" sx={{ paddingRight: 2, fontSize: 16 }}>
-                              MacOS Sensor - {sensor.version}
-                            </Typography>
-                          </Stack>
-                          <Button size="medium" color="primary" variant="contained">
-                            Download
-                          </Button>
-                        </Stack>
-                      </Box>
-                    </Box>
-                  ))
-                ) : (
-                  <Box sx={{ textAlign: 'center', pt: 20 }}>
-                    <Typography>No Versions available....</Typography>
-                  </Box>
-                )}
-              </>
-            </TabPanel>
-            <TabPanel value={tabValue} index={2}>
-              <>
-                {sensorVersionDetails.length > 0 ? (
-                  sensorVersionDetails.map((sensor, index) => (
-                    <Box
-                      key={index}
-                      component={'div'}
-                      sx={{
-                        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: 1,
-                        my: 1,
-                        minHeight: '30px',
-                        width: '800px'
-                      }}
-                    >
-                      <Box sx={{ padding: 1.25 }}>
-                        <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'} marginBottom={0.5}>
-                          <Stack direction={'row'} alignItems={'center'}>
-                            <Typography variant="h4" sx={{ paddingRight: 2, fontSize: 16 }}>
-                              Linux Sensor - {sensor.version}
-                            </Typography>
-                          </Stack>
-                          <Button size="medium" color="primary" variant="contained">
-                            Download
-                          </Button>
-                        </Stack>
-                      </Box>
-                    </Box>
-                  ))
-                ) : (
-                  <Box sx={{ textAlign: 'center', pt: 20 }}>
-                    <Typography>No Versions available....</Typography>
-                  </Box>
-                )}
-              </>
-            </TabPanel>
-          </Grid>
+          ))}
         </Grid>
-      </Box>
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="md" disableRestoreFocus>
-        <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h4">Minor Versions</Typography>
-          <IconButton
-            onClick={() => {
-              handleCloseDialog();
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <CustomTable
-            rows={rows}
-            columns={columns}
-            selected={selected}
-            setSelected={setSelected}
-            actionIcon={<DownloadIcon fontSize="small" />}
-            onClickActionButton={onClickActionButton}
-            isCheckbox={false}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+      </Grid>
+    </Box>
+    <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="md" disableRestoreFocus>
+      <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">Minor Versions</Typography>
+        <IconButton onClick={handleCloseDialog}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        <CustomTable
+          rows={rows}
+          columns={columns}
+          selected={selected}
+          setSelected={setSelected}
+          actionIcon={<DownloadIcon fontSize="small" />}
+          onClickActionButton={onClickActionButton}
+          isCheckbox={false}
+        />
+      </DialogContent>
+    </Dialog>
+  </>
+  
   );
 }
 //--------------------------------------
@@ -422,26 +350,57 @@ export const getSensorsVersion = async (portalId: string, _version: { sensorsVer
           type: 'versions',
           id: 1,
           attributes: {
+            platform: 'windows',
             version: 'v6.7.4',
-            downloadLink: null
+            downloadLink: "www.abc.com"
           }
         },
         {
           type: 'versions',
           id: 2,
           attributes: {
+            platform: 'windows',
             version: 'v7.7.4',
-            downloadLink: null
+            downloadLink: "www.abc.com"
 }
         },
         {
           type: 'versions',
           id: 3,
           attributes: {
+            platform: 'mac',
             version: 'v8.7.4',
-            downloadLink: null
+            downloadLink: "www.abc.com"
+          }
+        },
+        {
+          type: 'versions',
+          id: 4,
+          attributes: {
+            platform: 'mac',
+            version: 'v6.7.4',
+            downloadLink: "www.abc.com"
+          }
+        },
+        {
+          type: 'versions',
+          id: 5,
+          attributes: {
+            platform: 'linux',
+            version: 'v7.7.4',
+            downloadLink: "www.abc.com"
+}
+        },
+        {
+          type: 'versions',
+          id: 6,
+          attributes: {
+            platform: 'linux',
+            version: 'v8.7.4',
+            downloadLink: "www.abc.com"
           }
         }
+
       ]
     });
   }),
