@@ -404,3 +404,123 @@ export const getSensorsVersion = async (portalId: string, _version: { sensorsVer
       ]
     });
   }),
+   //-----------+++++
+import { useState, useEffect } from "react";
+import { Box, Button, Divider, Grid, Tab, Tabs, Typography, Dialog, DialogTitle, DialogContent, IconButton, Stack } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import WindowsIcon from "@mui/icons-material/Windows";
+import MacosIcon from "@mui/icons-material/Apple";
+import LinuxIcon from "@mui/icons-material/Linux";
+import axios from "axios";
+
+const REMOTE_URL = "your_api_base_url"; // Replace with your actual API base URL
+
+const InstallAgent = () => {
+  const [tabValue, setTabValue] = useState(0);
+  const [sensorVersionDetails, setSensorVersionDetails] = useState([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchAgentVersions = async () => {
+      try {
+        const response = await axios.get(`${REMOTE_URL}/api/agent-versions`);
+        if (response.data && response.data.data) {
+          setSensorVersionDetails(response.data.data.map(item => item.attributes));
+        }
+      } catch (error) {
+        console.error("Error fetching agent versions:", error);
+      }
+    };
+
+    fetchAgentVersions();
+  }, []);
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
+
+  return (
+    <>
+      <Box component="div" sx={{ padding: "0px 25px" }}>
+        <Typography variant="h4" sx={{ marginBottom: "10px" }}>
+          Install Agent
+        </Typography>
+        <Typography variant="h6" sx={{ marginBottom: "10px" }}>
+          Install your sensor in Windows, MacOS, and Linux.
+        </Typography>
+      </Box>
+      <Divider />
+      <Box component="div" sx={{ padding: "0px 25px" }}>
+        <Grid container>
+          <Grid item xs={12}>
+            <Tabs value={tabValue} onChange={handleTabChange} sx={{ marginBottom: "20px" }}>
+              <Tab icon={<WindowsIcon />} iconPosition="start" label="Windows" />
+              <Tab icon={<MacosIcon />} iconPosition="start" label="MacOS" />
+              <Tab icon={<LinuxIcon />} iconPosition="start" label="Linux" />
+            </Tabs>
+
+            {["windows", "mac", "linux"].map((platform, idx) => (
+              <div key={platform} hidden={tabValue !== idx}>
+                {sensorVersionDetails.filter(sensor => sensor.platform === platform).length > 0 ? (
+                  sensorVersionDetails
+                    .filter(sensor => sensor.platform === platform)
+                    .map((sensor, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                          borderRadius: 1,
+                          my: 1,
+                          minHeight: "30px",
+                          width: "800px"
+                        }}
+                      >
+                        <Box sx={{ padding: 1.25 }}>
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="h6">
+                              {platform.charAt(0).toUpperCase() + platform.slice(1)} Sensor - {sensor.version}
+                            </Typography>
+                            <Button
+                              size="medium"
+                              color="primary"
+                              variant="contained"
+                              href={sensor.downloadLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Download
+                            </Button>
+                          </Stack>
+                        </Box>
+                      </Box>
+                    ))
+                ) : (
+                  <Box sx={{ textAlign: "center", pt: 20 }}>
+                    <Typography>No Versions available....</Typography>
+                  </Box>
+                )}
+              </div>
+            ))}
+          </Grid>
+        </Grid>
+      </Box>
+      <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="md" disableRestoreFocus>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="h4">Minor Versions</Typography>
+          <IconButton onClick={handleCloseDialog}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {/* Your CustomTable component should go here */}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default InstallAgent;
