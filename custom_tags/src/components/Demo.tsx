@@ -5,7 +5,7 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import { useContext, useState } from 'react';
 import { Box, Button, Paper, Popper, Typography } from '@mui/material';
-// import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
+import { blue } from '@mui/material/colors';
 
 import { PortalContext } from '../contexts/portalInfo';
 import { IIncidentDetailType } from '../pages/detections/DetectionDetailPage';
@@ -18,7 +18,7 @@ interface TagsProps {
   updateTag: (attributes: Partial<IIncidentDetailType>) => Promise<void>;
 }
 
-const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
+const Tags: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
   const { tags: apiTags } = useContext(PortalContext)!;
   const apiNewTags = apiTags.map((tag, i) => ({ id: i, label: tag }));
   const defaultTags = tagsList;
@@ -42,13 +42,21 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
 
   const handleChange = (_event: any, newValue: string[]) => {
     if (newValue.length > MAX_TAGS) {
-      setWarningMessage("Tag limit of 15 reached");
+      setWarningMessage('Tag limit of 15 reached');
       return;
     }
     setWarningMessage('');
-    const validTags = newValue.filter(tag => tag.length <= MAX_TAG_LENGTH);
+
+    // Check for tags with spaces at the start or end
+    const hasLeadingOrTrailingSpaces = newValue.some((tag) => tag.startsWith(' ') || tag.endsWith(' '));
+    if (hasLeadingOrTrailingSpaces) {
+      setWarningMessage('');
+      return;
+    }
+
+    const validTags = newValue.filter((tag) => tag.length <= MAX_TAG_LENGTH);
     if (validTags.length !== newValue.length) {
-      setWarningMessage("Character limit of 30 reached");
+      setWarningMessage('Character limit of 30 reached');
       return;
     }
     const lowerCaseTagsSet = new Set();
@@ -63,9 +71,7 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
     }
 
     setSelectedTags(uniqueTags);
-    setAvailableOptions(
-      apiNewTags.map((tag) => tag.label).filter((option) => !lowerCaseTagsSet.has(option.toLowerCase()))
-    );
+    setAvailableOptions(apiNewTags.map((tag) => tag.label).filter((option) => !lowerCaseTagsSet.has(option.toLowerCase())));
     setHasEdited(true);
   };
 
@@ -87,9 +93,7 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
 
   const handleCancel = () => {
     setSelectedTags(defaultTags);
-    setAvailableOptions(
-      apiNewTags.map((tag) => tag.label).filter((option) => !defaultTags.includes(option))
-    );
+    setAvailableOptions(apiNewTags.map((tag) => tag.label).filter((option) => !defaultTags.includes(option)));
     setHasEdited(false);
   };
 
@@ -104,26 +108,36 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
               options={availableOptions}
               value={selectedTags}
               onChange={handleChange}
-              defaultValue={[tagsList.map((tag: { lowercase: any; }) => tag.lowercase)]}
+              defaultValue={[tagsList.map((tag: { lowercase: any }) => tag.lowercase)]}
               freeSolo
               filterSelectedOptions
               filterOptions={(options, state) => {
                 const inputValue = state.inputValue.toLowerCase();
                 return options.filter((option) => option.toLowerCase().includes(inputValue));
               }}
-              size='small'
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#1677ff' },
+                  '&:hover fieldset': { borderColor: '#1677ff' },
+                  '&.Mui-focused fieldset': { borderColor: '#1677ff' }
+                }
+              }}
               renderTags={(value, getTagProps) =>
                 value.map((option: string, index: number) => {
                   const { key, ...tagProps } = getTagProps({ index });
                   const isDefaultTag = defaultTags.includes(option);
                   const showDeleteIcon = hasEdited || !isDefaultTag;
                   return (
-                    <Chip variant="outlined"
+                    <Chip
+                      variant="outlined"
                       label={option}
                       size="small"
+                      sx={{ backgroundColor: blue[50], color: '#1677ff', border: 'none' }}
                       key={key}
                       {...tagProps}
-                      onDelete={showDeleteIcon ? tagProps.onDelete : undefined} />
+                      onDelete={showDeleteIcon ? tagProps.onDelete : undefined}
+                    />
                   );
                 })
               }
@@ -134,42 +148,51 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
                   placeholder="Add Tags..."
                   InputProps={{
                     ...params.InputProps,
-                    endAdornment: null,
+                    endAdornment: null
+                  }}
+                  sx={{
+                    '& .MuiInput-underline:before': { borderBottomColor: '#1677ff !important' },
+                    '& .MuiInput-underline:hover:before': { borderBottomColor: '#1677ff !important' },
+                    '& .MuiInput-underline:after': { borderBottomColor: '#1677ff !important' }
                   }}
                   onClick={handleTextField}
                 />
               )}
             />
-          )
-            : (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+          ) : (
+            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
                 {selectedTags.slice(0, 3).map((tag, index) => (
-                  <Chip key={index} label={tag} size="small" variant="outlined" />
-                ))}
-                {selectedTags.length > 3 && (
                   <Chip
-                    label={`+${selectedTags.length - 3}`}
+                    key={index}
+                    label={tag}
                     size="small"
                     variant="outlined"
-                    onClick={handleClick}
+                    sx={{ backgroundColor: blue[50], color: '#1677ff', border: 'none' }}
                   />
-                )}
-                {/* <IconButton onClick={handleToggleEditMode} size="small">
-                <Typography>Add Tag</Typography>
-                <ModeEditOutlineOutlinedIcon fontSize="small" />
-              </IconButton> */}
-                <Button
-                  sx={{ p: 0 }}
-                  variant="text"
-                  color="primary"
-                  onClick={() => {
-                    handleToggleEditMode();
-                  }}
-                >
-                  Add Tag
-                </Button>
+                ))}
               </Box>
-            )}
+              {selectedTags.length > 3 && (
+                <Chip
+                  label={`+${selectedTags.length - 3}`}
+                  size="small"
+                  variant="outlined"
+                  onClick={handleClick}
+                  sx={{ backgroundColor: blue[50], color: '#1677ff', border: 'none' }}
+                />
+              )}
+              <Button
+                sx={{ p: 0 , minWidth:0}}
+                variant="text"
+                color="primary"
+                onClick={() => {
+                  handleToggleEditMode();
+                }}
+              >
+                Add Tag
+              </Button>
+            </Box>
+          )}
         </Stack>
         {hasEdited && (
           <Box sx={{ display: 'flex', m: 0, p: 0 }}>
@@ -182,13 +205,15 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
               }}
             >
               Save
-            </Button><Button
+            </Button>
+            <Button
               sx={{ p: 0 }}
               variant="text"
               color="primary"
               onClick={() => {
                 handleCancel();
-              }}>
+              }}
+            >
               Cancel
             </Button>
           </Box>
@@ -199,14 +224,21 @@ const Tag: React.FC<TagsProps> = ({ tagsList, updateTag }: any) => {
             <Paper sx={{ p: 1, mt: 1, boxShadow: 3, maxWidth: 200 }}>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {selectedTags.slice(3).map((tag, index) => (
-                  <Chip key={index} label={tag} size="small" variant="outlined" />
+                  <Chip
+                    key={index}
+                    label={tag}
+                    size="small"
+                    variant="outlined"
+                    sx={{ backgroundColor: blue[50], color: '#1677ff', border: 'none' }}
+                  />
                 ))}
               </Box>
             </Paper>
           </Popper>
         )}
       </Box>
-      <Typography sx={{ pl: 3, pt: 1, color: "red" }}>{warningMessage}</Typography></Box>
+      <Typography variant='body2' sx={{ pl: 3, pt: 1, color: 'red' }}>{warningMessage}</Typography>
+    </Box>
   );
 };
-export default Tag;
+export default Tags;
