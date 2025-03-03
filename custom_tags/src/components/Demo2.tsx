@@ -303,8 +303,8 @@ export function AgentInstallation() {
 //--------------------------------------
 import { JSON_API_ACCEPT_TYPE, JSON_API_CONTENT_TYPE, REMOTE_URL } from './technician';
 
-export const getApikey = async (portalId: string) => {
-  const url = `${REMOTE_URL}/api/fetch-enrollment-key?portal_id=${portalId}`;
+export const getSensorsVersion = async (portalId: string, osType: osType, _version: { sensorsVersion?: string[] }) => {
+  const url = `${REMOTE_URL}/api/agent-versions?portal_id=${portalId}&platform=${osType}`;
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -345,65 +345,42 @@ export const getSensorsVersion = async (portalId: string, _version: { sensorsVer
 
   http.get(`${REMOTE_URL}/api/agent-versions`, async ({ request, params }) => {
     return HttpResponse.json({
-      data: [
+      "data": [
         {
-          type: 'versions',
-          id: 1,
-          attributes: {
-            platform: 'windows',
-            version: 'v6.7.4',
-            downloadLink: "www.abc.com"
+          "type": "agentVersionInfos",
+          "id": "9606891426025472",
+          "attributes": {
+            "agentName": "RMM agent",
+            "version": "4.2.1",
+            "downloadUrl": "https://downloads.hexnode.com/windows-agent/HexnodeAgent421.zip"
           }
         },
         {
-          type: 'versions',
-          id: 2,
-          attributes: {
-            platform: 'windows',
-            version: 'v7.7.4',
-            downloadLink: "www.abc.com"
-}
-        },
-        {
-          type: 'versions',
-          id: 3,
-          attributes: {
-            platform: 'mac',
-            version: 'v8.7.4',
-            downloadLink: "www.abc.com"
+          "type": "agentVersionInfos",
+          "id": "9606891426025473",
+          "attributes": {
+            "agentName": "Installer agent",
+            "version": "4.2.2",
+            "downloadUrl": "https://downloads.hexnode.com/windows-agent/HexnodeAgent422.zip"
           }
         },
         {
-          type: 'versions',
-          id: 4,
-          attributes: {
-            platform: 'mac',
-            version: 'v6.7.4',
-            downloadLink: "www.abc.com"
-          }
-        },
-        {
-          type: 'versions',
-          id: 5,
-          attributes: {
-            platform: 'linux',
-            version: 'v7.7.4',
-            downloadLink: "www.abc.com"
-}
-        },
-        {
-          type: 'versions',
-          id: 6,
-          attributes: {
-            platform: 'linux',
-            version: 'v8.7.4',
-            downloadLink: "www.abc.com"
+          "type": "agentVersionInfos",
+          "id": "9606891426025474",
+          "attributes": {
+            "agentName": "ZEQ agent",
+            "version": "4.2.3",
+            "downloadUrl": "https://downloads.hexnode.com/windows-agent/HexnodeAgent423.zip"
           }
         }
-
-      ]
+      ],
+      "meta": {
+        "count": 3
+      }
     });
   }),
+        
+          
    //-----------+++++
 import { useState, useEffect } from "react";
 import { Box, Button, Divider, Grid, Tab, Tabs, Typography, Dialog, DialogTitle, DialogContent, IconButton, Stack } from "@mui/material";
