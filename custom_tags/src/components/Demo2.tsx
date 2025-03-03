@@ -108,11 +108,11 @@ export function AgentInstallation() {
     }
   }
 
-  async function fetchSensors() {
-    const sensorsDetails: string[] = ['platform','version', 'downloadLink'];
+ async function fetchSensors() {
+    const sensorsDetails: string[] = ['agentName','version', 'downloadLink'];
 
     try {
-      const response = (await getSensorsVersion(portalId, {
+      const response = (await getSensorsVersion(portalId, osType.WINDOWS,{
         sensorsVersion: sensorsDetails
       })) as Response;
       if (isTechnicianAuthzModified(response)) {
@@ -125,13 +125,14 @@ export function AgentInstallation() {
         sensorsData.forEach((sensor: any) => {
           const attributes = sensor?.attributes;
           sensorsVersion.push({
-            platform: attributes?.platform,
+            agentName: attributes?.agentName,
             version: attributes?.version,
             downloadLink: attributes?.downloadLink
           });
         });
 
         setSensorVersionDetails(sensorsVersion);
+     
       }
     } catch (error) {
       console.error(error);
