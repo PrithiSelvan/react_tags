@@ -501,4 +501,64 @@ const InstallAgent = () => {
   );
 };
 
+//------------reference-----------------
+ const [roleSchema, setRoleSchema] = useState<RoleSchema>({
+        sensor: {
+          label: 'Sensors',
+          isView: false
+        }})
+        const handleOnChangeCheckbox = (resource: string, action: 'isView') => {
+          const value = !roleSchema[resource][action];
+          setRoleSchema((prevValue) => {
+            prevValue[resource][action] = value;
+      
+            if (action != 'isView' && prevValue[resource]['isView'] == false) {
+              prevValue[resource]['isView'] = true;
+            }
+      
+           
+            return {
+              ...prevValue
+            };
+          });
+         
+        };
+   {Object.keys(roleSchema).map((resource: string) => {
+        return(
+          <Box component={'div'} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          {roleSchema[resource]?.isView != undefined ? (
+                         <IconButton onChange={()=> {handleOnChangeCheckbox(resource, 'isView');}}><PreviewIcon/></IconButton>
+                          ) : (
+                            <Box component={'div'} sx={{ width: '42px', height: '42px' }}></Box>
+                          )}
+                          </Box>
+        );
+ {ability.can('view', 'detections') ? (
+                      <Grid2 size={12} sx={{ borderBottom: 1, borderColor: 'divider', pl: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: '600', mt: 1 }}>
+                          Sensor
+                        </Typography>
+                        <Grid2 container sx={{ p: 2 }} rowSpacing={1} alignItems={'flex-start'}>
+                          {Object.keys(sensorData).map((key) => (
+                            <>
+                              <Grid2 size={3}>
+                                <Typography color="text.secondary">{sensorData[key].label}</Typography>
+                              </Grid2>
+                              <Grid2 size={9}>
+                                {typeof sensorData[key].value == 'string' ? (
+                                  <OverflowTooltip typographySxProps={{ fontSize: '14px' }}>{sensorData[key].value}</OverflowTooltip>
+                                ) : (
+                                  sensorData[key].value
+                                )}
+                              </Grid2>
+                            </>
+                          ))}
+                        </Grid2>
+                      </Grid2>
+                       ) : (
+                        <>
+                          return();
+                        </>
+                      )}
+//-------------------------------------
 export default InstallAgent;
