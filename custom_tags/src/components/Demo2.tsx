@@ -516,6 +516,7 @@ export const AbilityProvider = ({ children }: { children: any }) => {
     }
 
   ];
+  const permissions: object[] = isSuperAdmin ? superAdminPermissions : (portalPermissions as object[]);
   const ability = createMongoAbility(permissions);
   return <AbilityContext.Provider value={ability}>{children}</AbilityContext.Provider>;
   
