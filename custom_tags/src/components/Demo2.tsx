@@ -502,6 +502,49 @@ const InstallAgent = () => {
 };
 
 //------------reference-----------------
+export const AbilityContext = createContext<AnyAbility>(createMongoAbility());
+export const Can = createContextualCan(AbilityContext.Consumer);
+
+
+
+export const AbilityProvider = ({ children }: { children: any }) => {
+  const { isSuperAdmin, permissions: portalPermissions } = useContext(PortalContext)!;
+  const superAdminPermissions = [
+    {
+      action:['view'],
+      subject:'sensor'
+    }
+
+  ];
+  const ability = createMongoAbility(permissions);
+  return <AbilityContext.Provider value={ability}>{children}</AbilityContext.Provider>;
+  
+    const ability = useAbility(AbilityContext);
+    const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+    const { pathname } = useLocation();
+  
+    const handleToggle = (id: string) => {
+      setOpenMenuId((prevId) => (prevId === id ? null : id));
+    };
+    const [menus] = React.useState<MenuItems[]>([
+      {
+        id: 'threat-management',
+        type: 'group',
+        title: 'Threat Management',
+        defaultRoute: '/detections',
+        isHidden: ability.cannot('view', 'audits'),
+        children: [
+          {
+            id: 'detections',
+            title: 'Detections',
+            type: 'item',
+            isHidden: ability.cannot('view', 'audits'),
+            route: '/detections/:id',
+            disabled: false
+          },
+        ]
+      }
+    ]);
  const [roleSchema, setRoleSchema] = useState<RoleSchema>({
         sensor: {
           label: 'Sensors',
