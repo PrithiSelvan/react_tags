@@ -1,3 +1,37 @@
+import { createContext } from 'react';
+import { createContextualCan } from '@casl/react';
+import { AnyAbility } from '@casl/ability';
+import { createMongoAbility } from '@casl/ability';
+
+
+export const FeatureFlagContext = createContext<AnyAbility>(createMongoAbility());
+export const Can = createContextualCan(FeatureFlagContext.Consumer);
+
+export const FeatureFlagProvider = ({ children }: { children: any }) => {
+
+    let featureFlagPermissions = [
+        {
+            action: ['view'],
+            subject: 'Sensor'
+          },
+          {
+            action: ['view'],
+            subject: 'GroupBy'
+          },
+
+
+    ];
+
+
+
+    const flagability = createMongoAbility(featureFlagPermissions);
+
+
+    return <FeatureFlagContext.Provider value={flagability}>{children}</FeatureFlagContext.Provider>;
+    
+};
+
+
 import { useContext } from 'react';
 import { Box, Checkbox, Divider, IconButton, List, ListItem, Popover, Typography } from '@mui/material';
 import { PortalContext } from '../../../../contexts/portalInfo';
