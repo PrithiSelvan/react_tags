@@ -1,272 +1,130 @@
-import React, { useContext, useState } from 'react';
-import { AbilityContext } from './AbilityProvider';
-import { IconButton, Typography, Box } from '@mui/material';
+import { useContext } from 'react';
+import { Box, Checkbox, Divider, IconButton, List, ListItem, Popover, Typography } from '@mui/material';
+import { PortalContext } from '../../../../contexts/portalInfo';
 import PreviewIcon from '@mui/icons-material/Preview';
-import Grid2 from '@mui/material/Grid';
-import { createMongoAbility } from '@casl/ability';
+import React from 'react';
+import { FeatureFlagContext } from '../../../../contexts/featureFlagContext';
+import {   AbilityBuilder, createMongoAbility } from '@casl/ability';
 
-const SensorComponent = () => {
-  const ability = useContext(AbilityContext); // Get ability instance
 
-  const [roleSchema, setRoleSchema] = useState({
-    sensor: {
-      label: 'Sensors',
-      isView: ability.can('view', 'sensor'), // Initialize based on ability
-    },
-  });
+const FeatureFlag = () => {
+ 
+  const flagability = useContext(FeatureFlagContext);
+  
 
-  const handleOnChangeCheckbox = (resource: string) => {
-    setRoleSchema((prevValue) => {
-      const newState = {
-        ...prevValue,
-        [resource]: {
-          ...prevValue[resource],
-          isView: !prevValue[resource].isView, // Toggle visibility
-        },
-      };
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 
-      return newState;
-    });
-
-    // Toggle ability permission dynamically
-    ability.update([
-      {
-        action: 'view',
-        subject: 'sensor',
-        inverted: ability.can('view', 'sensor'), // Toggle permission
-      },
-    ]);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const [menus] = useState([
-    {
-      id: 'sensor-management',
-      type: 'group',
-      title: 'Sensor Management',
-      defaultRoute: '/sensors',
-      isHidden: ability.cannot('view', 'sensor'), // Hide if cannot view
-      children: [
-        {
-          id: 'sensor-details',
-          title: 'Sensor Details',
-          type: 'item',
-          isHidden: ability.cannot('view', 'sensor'), // Hide if cannot view
-          route: '/sensors/:id',
-          disabled: false,
-        },
-      ],
-    },
-  ]);
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
+  // const handleOnChangeCheckbox = (resource: string, action: 'isView') => {
+  //   const value = !isFlagEnabled[resource][action];
+  //   setIsFlagEnabled((prevFlags) => ({
+  //     ...prevFlags,
+  //     [resource]: {
+  //       ...prevFlags[resource],
+  //       isView: value
+  //     }
+  //   }));
+  // };
+  const handleOnChangeCheckbox = (resource: string, action: 'view') => {
+    const { can, rules } = new AbilityBuilder(createMongoAbility);
+
+    // Toggle the feature flag
+    if (flagability.can(action, resource)) {
+      // Remove the ability if it exists
+      flagability.rules.forEach(rule => {
+        if (rule.subject !== resource || rule.action !== action) {
+          can(rule.action, rule.subject);
+        }
+      });
+    } else {
+      // Add the ability if it does not exist
+      flagability.rules.forEach(rule => {
+        can(rule.action, rule.subject);
+      });
+      can(action, resource);
+    }
+
+    // Update the flagability with the new rules
+    flagability.update(rules);
+    console.log(`Feature flag for ${resource} ${action} changed`);
+  };
   return (
     <Box>
-      {Object.keys(roleSchema).map((resource: string) => (
-        <Box key={resource} component={'div'} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {roleSchema[resource]?.isView !== undefined ? (
-            <IconButton onClick={() => handleOnChangeCheckbox(resource)}>
-              <PreviewIcon />
-            </IconButton>
-          ) : (
-            <Box component={'div'} sx={{ width: '42px', height: '42px' }}></Box>
-          )}
-        </Box>
-      ))}
-
-      {/* ✅ Show sensor details if ability.can('view', 'sensor'), otherwise hide */}
-      {!ability.cannot('view', 'sensor') && (
-        <Grid2 size={12} sx={{ borderBottom: 1, borderColor: 'divider', pl: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: '600', mt: 1 }}>Sensor</Typography>
-          <Grid2 container sx={{ p: 2 }} rowSpacing={1} alignItems={'flex-start'}>
-            {Object.keys(sensorData).map((key) => (
-              <React.Fragment key={key}>
-                <Grid2 size={3}>
-                  <Typography color="text.secondary">{sensorData[key].label}</Typography>
-                </Grid2>
-                <Grid2 size={9}>
-                  {typeof sensorData[key].value === 'string' ? (
-                    <OverflowTooltip typographySxProps={{ fontSize: '14px' }}>
-                      {sensorData[key].value}
-                    </OverflowTooltip>
-                  ) : (
-                    sensorData[key].value
-                  )}
-                </Grid2>
-              </React.Fragment>
-            ))}
-          </Grid2>
-        </Grid2>
-      )}
-    </Box>
-  );
-};
-
-export default SensorComponent;
-
-//---------------------------------------------------------------------------------
-import React, { useContext, useState } from 'react';
-import { AbilityContext } from './AbilityProvider';
-import { IconButton, Typography, Box } from '@mui/material';
-import PreviewIcon from '@mui/icons-material/Preview';
-import Grid2 from '@mui/material/Grid'; // Ensure correct Grid component
-import { createMongoAbility } from '@casl/ability';
-
-const SensorComponent = () => {
-  const ability = useContext(AbilityContext); // Get ability instance
-
-  const [roleSchema, setRoleSchema] = useState({
-    sensor: {
-      label: 'Sensors',
-      isView: false,
-    },
-  });
-
-  const handleOnChangeCheckbox = (resource: string, action: 'isView') => {
-    setRoleSchema((prevValue) => {
-      const newState = {
-        ...prevValue,
-        [resource]: {
-          ...prevValue[resource], // Fix mutation issue
-          [action]: !prevValue[resource][action],
-        },
-      };
-
-      return newState;
-    });
-
-    // Toggle ability using `cannot` like in the menus array
-    ability.update([
-      {
-        action: 'view',
-        subject: 'sensor',
-        inverted: ability.can('view', 'sensor'), // Toggle permission
-      },
-    ]);
-  };
-
-  // Use ability.cannot like in your menus
-  const isSensorHidden = ability.cannot('view', 'sensor');
-
-  return (
-    <Box>
-      {Object.keys(roleSchema).map((resource: string) => (
-        <Box key={resource} component={'div'} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {roleSchema[resource]?.isView !== undefined ? (
-            <IconButton onClick={() => handleOnChangeCheckbox(resource, 'isView')}>
-              <PreviewIcon />
-            </IconButton>
-          ) : (
-            <Box component={'div'} sx={{ width: '42px', height: '42px' }}></Box>
-          )}
-        </Box>
-      ))}
-
-      {/* ✅ Hide sensor details when ability.cannot('view', 'sensor') */}
-      {!isSensorHidden && (
-        <Grid2 size={12} sx={{ borderBottom: 1, borderColor: 'divider', pl: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: '600', mt: 1 }}>Sensor</Typography>
-          <Grid2 container sx={{ p: 2 }} rowSpacing={1} alignItems={'flex-start'}>
-            {Object.keys(sensorData).map((key) => (
-              <React.Fragment key={key}>
-                <Grid2 size={3}>
-                  <Typography color="text.secondary">{sensorData[key].label}</Typography>
-                </Grid2>
-                <Grid2 size={9}>
-                  {typeof sensorData[key].value === 'string' ? (
-                    <OverflowTooltip typographySxProps={{ fontSize: '14px' }}>
-                      {sensorData[key].value}
-                    </OverflowTooltip>
-                  ) : (
-                    sensorData[key].value
-                  )}
-                </Grid2>
-              </React.Fragment>
-            ))}
-          </Grid2>
-        </Grid2>
-      )}
-    </Box>
-  );
-};
-
-export default SensorComponent;
-//--------------------------------------------------
-import React, { createContext, useContext, useState } from 'react';
-import { createMongoAbility } from '@casl/ability';
-import { IconButton, Typography, Box } from '@mui/material';
-import PreviewIcon from '@mui/icons-material/Preview';
-import Grid from '@mui/material/Grid';
-
-// Define initial permissions
-const flagPermission = [
-  {
-    action: ['view'],
-    subject: 'sensor'
-  }
-];
-
-const ability = createMongoAbility(flagPermission);
-export const AbilityContext = createContext(ability);
-
-const AbilityProvider = ({ children }) => {
-  const [abilityState, setAbilityState] = useState(ability);
-
-  return (
-    <AbilityContext.Provider value={abilityState}>{children}</AbilityContext.Provider>
-  );
-};
-
-const SensorComponent = () => {
-  const ability = useContext(AbilityContext);
-  const [roleSchema, setRoleSchema] = useState({
-    sensor: {
-      label: 'Sensors',
-      isView: false,
-    },
-  });
-
-  const sensorData = {
-    temperature: { label: 'Temperature', value: '25°C' },
-    humidity: { label: 'Humidity', value: '60%' },
-  };
-
-  const handleOnChangeCheckbox = (resource, action) => {
-    setRoleSchema((prevValue) => ({
-      ...prevValue,
-      [resource]: {
-        ...prevValue[resource],
-        [action]: !prevValue[resource][action],
-      },
-    }));
-  };
-
-  return (
-    <Box>
-      {Object.keys(roleSchema).map((resource) => (
-        <Box key={resource} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <IconButton onClick={() => handleOnChangeCheckbox(resource, 'isView')}>
-            <PreviewIcon />
-          </IconButton>
-        </Box>
-      ))}
-
-      {ability.can('view', 'sensor') && (
-        <Grid container spacing={2} sx={{ borderBottom: 1, borderColor: 'divider', pl: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: '600', mt: 1 }}>Sensor</Typography>
-          {Object.keys(sensorData).map((key) => (
-            <React.Fragment key={key}>
-              <Grid item xs={3}>
-                <Typography color="text.secondary">{sensorData[key].label}</Typography>
-              </Grid>
-              <Grid item xs={9}>
-                <Typography>{sensorData[key].value}</Typography>
-              </Grid>
-            </React.Fragment>
+      <IconButton onClick={handleClick}>
+        <PreviewIcon />
+      </IconButton>
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left'
+        }}
+      >
+        <List sx={{ px: '16px', pb: 0, minWidth: '200px', maxHeight: '400px' }}>
+        {flagability.rules.map((rule, index) => (
+            <ListItem
+              key={index}
+              sx={{
+                padding: '0px',
+                marginBottom: '8px',
+                alignItems: 'center',
+                '&:hover': {
+                  bgcolor: 'action.hover'
+                }
+              }}
+            >
+              <>
+              <Checkbox
+                  checked={flagability.can('view', rule.subject)}
+                  id={`${rule.subject}_view`}
+                  onChange={() => {
+                    handleOnChangeCheckbox(rule.subject, 'view');
+                  }}
+                />
+                <Typography sx={{ p: 2, textAlign: 'left' }}>{rule.subject}</Typography>
+              </>
+            </ListItem>
           ))}
-        </Grid>
-      )}
+        </List>
+        <Divider />
+      </Popover>
     </Box>
   );
 };
 
-export { AbilityProvider, SensorComponent };
-
+export default FeatureFlag;
+in above code checkbox always showing with tick mark and not able to change it all checkbox related details are in hide state only since checkbox is ticked how to solve it and work checkbox to hide and show checkbox related details properly 
+const DetectionDetailPage = () => {
+const flagability = useContext(FeatureFlagContext);
+  {flagability.can('view', 'sensor')? (
+                        <Grid2 size={12} sx={{ borderBottom: 1, borderColor: 'divider', pl: 2 }}>
+                          <Typography variant="h6" sx={{ fontWeight: '600', mt: 1 }}>
+                            Sensor
+                          </Typography>
+                          <Grid2 container sx={{ p: 2 }} rowSpacing={1} alignItems={'flex-start'}>
+                            {Object.keys(sensorData).map((key) => (
+                              <>
+                                <Grid2 size={3}>
+                                  <Typography color="text.secondary">{sensorData[key].label}</Typography>
+                                </Grid2>
+                                <Grid2 size={9}>
+                                  {typeof sensorData[key].value == 'string' ? (
+                                    <OverflowTooltip typographySxProps={{ fontSize: '14px' }}>{sensorData[key].value}</OverflowTooltip>
+                                  ) : (
+                                    sensorData[key].value
+                                  )}
+                                </Grid2>
+                              </>
+                            ))}
+                          </Grid2>
+                        </Grid2>
+                      ) : null}
