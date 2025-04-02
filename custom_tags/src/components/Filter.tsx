@@ -1,172 +1,107 @@
-import { useState } from 'react';
-import type { RuleGroupType, Translations, RuleType, RuleGroupTypeIC } from 'react-querybuilder';
+import { useContext, useState, forwardRef, useImperativeHandle } from 'react';
+import type { RuleGroupType, RuleGroupTypeIC, Translations } from 'react-querybuilder';
 import { QueryBuilder } from 'react-querybuilder';
+import { QueryBuilderDnD } from '@react-querybuilder/dnd';
+import * as ReactDnD from 'react-dnd';
+import * as ReactDndHtml5Backend from 'react-dnd-html5-backend';
+import * as ReactDndTouchBackend from 'react-dnd-touch-backend';
 import 'react-querybuilder/dist/query-builder.css';
-import type { Field } from 'react-querybuilder';
 import { toFullOption } from 'react-querybuilder';
-import { createTheme, ThemeProvider, Button } from '@mui/material';
 import { QueryBuilderMaterial } from '@react-querybuilder/material';
-import { getSensorGroups } from './sensor-groups';
+import { Box } from '@mui/material';
+import { getSensors } from '../../api/sensors';
+import { PortalContext } from '../../contexts/portalInfo';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1677ff',
-    },
-    secondary: {
-      main: '#1677ff',
-    },
-  },
-  typography: {
-    body2: {
-      fontSize: '10px', // Customize font size for labels
-    },
-  },
-});
-
-const initialQuery: RuleGroupType = { combinator: 'and', rules: [] };
-
-export const validator = (r: RuleType) => !!r.value;
-
-export const fields = [
-  {
-    name: 'hostname',
-    label: 'HOST',
-    validator,
-  },
-  {
-    name: 'platform',
-    label: 'PLATFORM',
-    comparator: 'groupNumber',
-    groupNumber: 'group1',
-    valuesSources: ['MACOS', 'WINDOWS', 'LINUX'],
-  },
-  {
-    name: 'osVersion',
-    label: 'OS VERSION',
-    validator,
-  },
-  {
-    name: 'agentVersion',
-    label: 'AGENT VERSION',
-    validator,
-  },
-  {
-    name: 'createdTime',
-    label: 'REGISTRATION DATE',
-    inputType: 'datetime-local',
-    datatype: 'timestamp with time zone',
-  },
-  {
-    name: 'lastPingedTime',
-    label: 'LAST SYNCED',
-    inputType: 'datetime-local',
-    datatype: 'timestamp with time zone',
-  },
-  {
-    name: 'status',
-    label: 'STATUS',
-    comparator: 'groupNumber',
-    groupNumber: 'group1',
-    valuesSources: ['ACTIVE', 'INACTIVE', 'ISOLATED'],
-  },
-].map((o) => toFullOption(o));
+const initialQuery: RuleGroupTypeIC = { rules: [] };
 
 const customTranslations: Partial<Translations> = {
-  addRule: { label: 'Add' },
+    addRule: { label: '+ Add' },
 };
 
-const transformQuery = (query: RuleGroupTypeIC): RuleGroupTypeIC => {
-  const transformRules = (rules: any[]): any[] => {
-    return rules.map(rule => {
-      const { id, valueSource, ...rest } = rule;
-      if (rule.rules) {
-        return { ...rest, rules: transformRules(rule.rules) };
-      }
-      return rest;
-    });
-  };
+// Using forwardRef to expose handleSearch
+const DynamicGroup = forwardRef((_, ref) => {
+    const [query, setQuery] = useState(initialQuery);
+    const { portalId } = useContext(PortalContext)!;
 
-  return {
-    ...query,
-    combinator: query.combinator.toUpperCase(),
-    rules: transformRules(query.rules),
-  };
-};
+    const handleSearch = async () => {
+        const transformedQuery = transformQuery(query);
+        const fields = {
+            sensors: ['hostName', 'platform', 'osName', 'osVersion', 'agentVersion', 'status'],
+        };
 
-const DynamicGroup = () => {
-  const [query, setQuery] = useState(initialQuery);
-
-  const handleSearch = async () => {
-    const transformedQuery = transformQuery(query);
-    const fields = {
-      sensorGroups: ['hostName', 'osName', 'osVersion', 'agentVersion', 'status'],
+        try {
+            const response = await getSensors(portalId, undefined, undefined, undefined, transformedQuery, fields);
+            console.log('API Response:', response);
+        } catch (error) {
+            console.error('Error fetching sensor groups:', error);
+        }
     };
-    try {
-      const response = await getSensorGroups('test-1', 0, 10, 'createdTime', transformedQuery, fields);
-      console.log('API Response:', response);
-    } catch (error) {
-      console.error('Error fetching sensor groups:', error);
-    }
-  };
 
-  return (
-    <ThemeProvider theme={theme}>
-      <QueryBuilderMaterial>
-        <QueryBuilder
-          fields={fields}
-          query={query}
-          onQueryChange={setQuery}
-          controlElements={{
-            addGroupAction: (props) => (
-              <Button
-                {...props}
-                sx={{
-                  backgroundColor: '#ff5733',
-                  color: '#fff',
-                  fontSize: '12px',
-                  padding: '4px 8px',
-                  '&:hover': { backgroundColor: '#d43f00' },
-                }}
-              >
-                Group
-              </Button>
-            ),
-            addRuleAction: (props) => (
-              <Button
-                {...props}
-                sx={{
-                  backgroundColor: '#008080',
-                  color: '#fff',
-                  fontSize: '12px',
-                  padding: '4px 8px',
-                  '&:hover': { backgroundColor: '#005555' },
-                }}
-              >
-                Add
-              </Button>
-            ),
-            removeRuleAction: (props) => (
-              <Button
-                {...props}
-                sx={{
-                  backgroundColor: '#d32f2f',
-                  color: '#fff',
-                  fontSize: '12px',
-                  padding: '4px 8px',
-                  '&:hover': { backgroundColor: '#b71c1c' },
-                }}
-              >
-                X
-              </Button>
-            ),
-          }}
-          translations={customTranslations}
-        />
-        <button onClick={handleSearch}>Search</button>
-      </QueryBuilderMaterial>
-    </ThemeProvider>
-  );
-};
+    // Expose handleSearch to parent using useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        handleSearch,
+    }));
+
+    return (
+        <Box>
+            <QueryBuilderDnD dnd={{ ...ReactDnD, ...ReactDndHtml5Backend, ...ReactDndTouchBackend }}>
+                <QueryBuilderMaterial>
+                    <QueryBuilder
+                        fields={fields}
+                        query={query}
+                        onQueryChange={setQuery}
+                        controlClassnames={{ addRule: 'button', addGroup: 'button', removeRule: 'cancel', removeGroup: 'cancel' }}
+                        translations={customTranslations}
+                    />
+                </QueryBuilderMaterial>
+            </QueryBuilderDnD>
+        </Box>
+    );
+});
+
+// Add display name for better debugging
+DynamicGroup.displayName = 'DynamicGroup';
 
 export default DynamicGroup;
+
+//from.tsx:
+import { useState, useRef } from 'react';
+import { Box, Button, Popover } from '@mui/material';
+import DynamicGroup from './DynamicGroup';
+import { CustomTanStackTable } from '../../components/CustomTanStackTable';
+
+const FormComponent = () => {
+    const dynamicGroupRef = useRef<{ handleSearch: () => void } | null>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [isLoading, setLoading] = useState(false);
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const triggerSearch = () => {
+        if (dynamicGroupRef.current) {
+            dynamicGroupRef.current.handleSearch();
+        }
+    };
+
+    return (
+        <Box sx={{ color: '#1677FF', cursor: 'pointer' }}>
+            {/* Attach ref to DynamicGroup */}
+            <DynamicGroup ref={dynamicGroupRef} />
+
+            <Box sx={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', padding: '16px 0px 16px 24px', gap: 2 }}>
+                <Button variant="contained" onClick={triggerSearch}>
+                    Preview
+                </Button>
+
+                <Popover open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}>
+                    <CustomTanStackTable isLoading={isLoading} table={table} type={CustomTanStackTableType.LIST_TYPE} />
+                </Popover>
+            </Box>
+        </Box>
+    );
+};
+
+export default FormComponent;
+
