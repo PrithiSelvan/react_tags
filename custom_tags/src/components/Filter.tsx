@@ -1,6 +1,6 @@
 import { forwardRef, useContext, useImperativeHandle, useState } from 'react';
-import type { RuleGroupType, RuleGroupTypeIC, Translations } from 'react-querybuilder';
-import {  QueryBuilder } from 'react-querybuilder';
+import type { Combinator, CombinatorSelectorProps, RuleGroupType, RuleGroupTypeIC, Translations } from 'react-querybuilder';
+import { formatQuery, QueryBuilder } from 'react-querybuilder';
 import { QueryBuilderDnD } from '@react-querybuilder/dnd';
 import * as ReactDnD from 'react-dnd';
 import * as ReactDndHtml5Backend from 'react-dnd-html5-backend';
@@ -12,40 +12,42 @@ import { QueryBuilderMaterial } from '@react-querybuilder/material';
 import './style.css'
 import { getSensors } from '../../api/sensors';
 import { PortalContext } from '../../contexts/portalInfo';
-
+import { Filter } from '../../api/technician';
+import { FormControl, MenuItem, Select } from '@mui/material';
 
 
 const initialQuery: RuleGroupTypeIC = { rules: [] };
+
+
 // export const validator = (r: RuleType) => !!r.value;
-const useOperators = 
-    [
-        { name: '=', value: '=', label: '=' }, 
-        { name: '!=', value: '!=', label: '!=' },
-        { name: 'contains', value: 'contains', label: 'contains' }, 
-        { name: 'beginsWith', value: 'beginsWith', label: 'begins with' }, 
-        { name: 'endsWith', value: 'endsWith', label: 'ends with' }, 
-        { name: 'doesNotContain', value: 'doesNotContain', label: 'does not contain' }, 
-        { name: 'doesNotBeginWith', value: 'doesNotBeginWith', label: 'does not begin with' }, 
-        { name: 'doesNotEndWith', value: 'doesNotEndWith', label: 'does not end with' },
-    ]
+const useOperators = [
+    { name: '=', value: '=', label: '=' },
+    { name: '!=', value: '!=', label: '!=' },
+    { name: 'contains', value: 'contains', label: 'contains' },
+    { name: 'beginsWith', value: 'beginsWith', label: 'begins with' },
+    { name: 'endsWith', value: 'endsWith', label: 'ends with' },
+    { name: 'doesNotContain', value: 'doesNotContain', label: 'does not contain' },
+    { name: 'doesNotBeginWith', value: 'doesNotBeginWith', label: 'does not begin with' },
+    { name: 'doesNotEndWith', value: 'doesNotEndWith', label: 'does not end with' },
+]
 const platformType = [
-    { name: 'WINDOWS' , label: 'WINDOWS' }, 
+    { name: 'WINDOWS', label: 'WINDOWS' },
     { name: 'MACOS', label: 'MACOS' },
-    {name:'LINUX',label:'LINUX'}
+    { name: 'LINUX', label: 'LINUX' }
 ]
 
-const statusType =[
-    { name: 'ACTIVE' , label: 'ACTIVE' }, 
+const statusType = [
+    { name: 'ACTIVE', label: 'ACTIVE' },
     { name: 'INACTIVE', label: 'INACTIVE' },
-    {name:'ISOLATED',label:'ISOLATED'}
+    { name: 'ISOLATED', label: 'ISOLATED' }
 ]
 
 export const fields = (
     [
         {
-            name: 'hostname',
+            name: 'hostName',
             label: 'Host',
-            operators:useOperators
+            operators: useOperators
         },
         {
             name: 'platform',
@@ -60,17 +62,17 @@ export const fields = (
         {
             name: 'osName',
             label: 'Os Name',
-            operators:useOperators,
+            operators: useOperators,
         },
         {
             name: 'osVersion',
             label: 'Os Version',
-            operators:useOperators,
+            operators: useOperators,
         },
         {
             name: 'agentVersion',
             label: 'Agent Version',
-            operators:useOperators,
+            operators: useOperators,
         },
         {
             name: 'createdTime',
@@ -109,72 +111,76 @@ const customTranslations: Partial<Translations> = {
     addRule: { label: '+ Add' },
 };
 
-const transformQuery = (query: RuleGroupType): RuleGroupType => {
-    const transformRules = (rules: any[]): any[] => {
-        return rules.map(rule => {
-            const { id, valueSource, ...rest } = rule;
-            if (rule.rules) {
-                return { ...rest, rules: transformRules(rule.rules) };
-            }
-            return rest;
-        });
-    };
-
-    return {
-        ...query,
-        combinator: query.combinator.toUpperCase(),
-        rules: transformRules(query.rules),
-    };
-};
-
-
-
 const DynamicGroup = forwardRef((_, ref) => {
     const [query, setQuery] = useState<RuleGroupTypeIC>(initialQuery);
     const { portalId } = useContext(PortalContext)!;
-    // const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    // const handleClose = () => {
-    //     setAnchorEl(null);
-    //   };
-
-
+    // const transformedQueryString = formatQuery(query, 'json_without_ids');
+    // const transformedQuery = JSON.parse(transformedQueryString);
+    // const filters: Filter[] = transformedQuery.rules;
+    //********* temporary
+    const transformedQueryString = JSON.stringify(query, ['rules', 'field', 'operator', 'value']);
+    const transformedQuery = JSON.parse(transformedQueryString);
+    const filters: Filter[] = transformedQuery.rules;
+    //**********
+    const sensorsFields: string[] = [];
     const handleSearch = async () => {
-        const transformedQuery = transformQuery(query);
-        const fields = {
-            sensors: ['hostName','platform', 'osName', 'osVersion', 'agentVersion', 'status'],
-        };
         try {
-            const response = await getSensors(portalId, undefined, undefined, undefined, transformedQuery, fields);
+            const response = (await getSensors(portalId, undefined, undefined, undefined, filters, {
+                sensors: sensorsFields
+            })) as Response;
             console.log('API Response:', response);
+            return response;
         } catch (error) {
             console.error('Error fetching sensor groups:', error);
+            return [];
         }
     };
 
     useImperativeHandle(ref, () => ({
         handleSearch,
     }));
-   
 
-    
+    const CustomCombinatorSelector = ({ value, title, className, handleOnChange }: CombinatorSelectorProps) => (  //temporary
+
+        <FormControl variant="standard" >
+            <Select
+
+                className={className}
+                title={title}
+                value={value}
+                onChange={e => handleOnChange(e.target.value)}
+
+            >
+                <MenuItem value="and">AND</MenuItem>
+            </Select>
+        </FormControl>
+
+    );
+
+
 
     return (
         <QueryBuilderDnD
             dnd={{ ...ReactDnD, ...ReactDndHtml5Backend, ...ReactDndTouchBackend }}
         >
-          
-                <QueryBuilderMaterial>
-                        <QueryBuilder
 
-                            fields={fields}
-                            query={query}
-                            onQueryChange={setQuery}
-                            controlClassnames={{ addRule: 'button', addGroup: 'button', removeRule: 'cancel', removeGroup: 'cancel' }}
-                            translations={customTranslations} />
+            <QueryBuilderMaterial>
+                <QueryBuilder
 
-                </QueryBuilderMaterial>
- 
-         
+                    fields={fields}
+                    query={query}
+                    onQueryChange={setQuery}
+                    controlClassnames={{ addRule: 'button', addGroup: 'button', removeRule: 'cancel', removeGroup: 'cancel' }}
+                    translations={customTranslations}
+                    controlElements={{
+                        addGroupAction: () => null,     //temporary
+                        combinatorSelector:CustomCombinatorSelector,     //temporary
+                    }}
+                />
+
+            </QueryBuilderMaterial>
+
+
         </QueryBuilderDnD>
 
     );
